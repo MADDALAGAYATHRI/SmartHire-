@@ -1,0 +1,180 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "version": "1.0.0",
+    "title": "SmartHire API",
+    "description": "API documentation for SmartHire recruitment system"
+  },
+  "host": "localhost:8000",
+  "basePath": "/",
+  "schemes": ["http"],
+  "paths": {
+    "/signup": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "User signup",
+        "parameters": [
+          { "in": "body", "name": "body", "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "username": {"type": "string"},
+                "email": {"type": "string"},
+                "password": {"type": "string"}
+              },
+              "required": ["username", "email", "password"]
+            }
+          }
+        ],
+        "responses": { "200": { "description": "User created successfully" } }
+      }
+    },
+    "/login": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "User login",
+        "parameters": [
+          { "in": "body", "name": "body", "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "email": {"type": "string"},
+                "password": {"type": "string"}
+              },
+              "required": ["email", "password"]
+            }
+          }
+        ],
+        "responses": { "200": { "description": "Login successful" } }
+      }
+    },
+    "/logout": {
+      "get": {
+        "tags": ["Auth"],
+        "summary": "Logout user (clear session)",
+        "responses": { "200": { "description": "Logout successful" } }
+      }
+    },
+    "/api/jobs": {
+      "get": {
+        "tags": ["Jobs"],
+        "summary": "Get all jobs",
+        "responses": { "200": { "description": "List of jobs" } }
+      },
+      "post": {
+        "tags": ["Jobs"],
+        "summary": "Create a new job",
+        "parameters": [
+          { "in": "body", "name": "body", "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "title": {"type": "string"},
+                "department": {"type": "string"},
+                "description": {"type": "string"},
+                "required_skills": {"type": "array", "items": {"type": "string"}}
+              },
+              "required": ["title", "department", "description"]
+            }
+          }
+        ],
+        "responses": { "200": { "description": "Job created" } }
+      }
+    },
+    "/api/jobs/{job_id}": {
+      "get": {
+        "tags": ["Jobs"],
+        "summary": "Get job details by ID",
+        "parameters": [{ "name": "job_id", "in": "path", "required": true, "type": "string" }],
+        "responses": { "200": { "description": "Job details" } }
+      },
+      "put": {
+        "tags": ["Jobs"],
+        "summary": "Update a job",
+        "parameters": [
+          { "name": "job_id", "in": "path", "required": true, "type": "string" },
+          { "in": "body", "name": "body", "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "title": {"type": "string"},
+                "department": {"type": "string"},
+                "description": {"type": "string"},
+                "required_skills": {"type": "array", "items": {"type": "string"}}
+              }
+            }
+          }
+        ],
+        "responses": { "200": { "description": "Job updated" } }
+      },
+      "delete": {
+        "tags": ["Jobs"],
+        "summary": "Delete a job",
+        "parameters": [{ "name": "job_id", "in": "path", "required": true, "type": "string" }],
+        "responses": { "200": { "description": "Job deleted" } }
+      }
+    },
+    "/api/applications": {
+      "post": {
+        "tags": ["Applications"],
+        "summary": "Apply to a job",
+        "parameters": [
+          { "in": "body", "name": "body", "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "user_id": {"type": "string"},
+                "job_id": {"type": "string"},
+                "resume": {"type": "string"}
+              },
+              "required": ["user_id", "job_id"]
+            }
+          }
+        ],
+        "responses": { "200": { "description": "Application submitted" } }
+      }
+    },
+    "/api/applications/{user_id}": {
+      "get": {
+        "tags": ["Applications"],
+        "summary": "Get all applications of a user",
+        "parameters": [{ "name": "user_id", "in": "path", "required": true, "type": "string" }],
+        "responses": { "200": { "description": "List of applications" } }
+      }
+    },
+    "/api/applications/{application_id}": {
+      "delete": {
+        "tags": ["Applications"],
+        "summary": "Withdraw application",
+        "parameters": [{ "name": "application_id", "in": "path", "required": true, "type": "string" }],
+        "responses": { "200": { "description": "Application withdrawn" } }
+      }
+    },
+    "/api/users/{user_id}": {
+      "get": {
+        "tags": ["Users"],
+        "summary": "Get user profile",
+        "parameters": [{ "name": "user_id", "in": "path", "required": true, "type": "string" }],
+        "responses": { "200": { "description": "User details" } }
+      },
+      "put": {
+        "tags": ["Users"],
+        "summary": "Update user profile",
+        "parameters": [
+          { "name": "user_id", "in": "path", "required": true, "type": "string" },
+          { "in": "body", "name": "body", "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "username": {"type": "string"},
+                "email": {"type": "string"},
+                "password": {"type": "string"}
+              }
+            }
+          }
+        ],
+        "responses": { "200": { "description": "User updated" } }
+      }
+    }
+  }
+}

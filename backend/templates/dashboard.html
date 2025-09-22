@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - SmartHire{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Page Header -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900">Dashboard</h1>
+        <p class="mt-2 text-gray-600">Welcome back! Here's an overview of your hiring activities.</p>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-8">
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5 flex items-center">
+                <i class="fas fa-briefcase text-2xl text-blue-600"></i>
+                <div class="ml-5">
+                    <dt class="text-sm font-medium text-gray-500 truncate">Total Jobs</dt>
+                    <dd id="total-jobs" class="text-lg font-medium text-gray-900">0</dd>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5 flex items-center">
+                <i class="fas fa-chart-line text-2xl text-green-600"></i>
+                <div class="ml-5">
+                    <dt class="text-sm font-medium text-gray-500 truncate">Active Jobs</dt>
+                    <dd id="active-jobs" class="text-lg font-medium text-gray-900">0</dd>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5 flex items-center">
+                <i class="fas fa-users text-2xl text-purple-600"></i>
+                <div class="ml-5">
+                    <dt class="text-sm font-medium text-gray-500 truncate">Total Candidates</dt>
+                    <dd id="total-candidates" class="text-lg font-medium text-gray-900">0</dd>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5 flex items-center">
+                <i class="fas fa-robot text-2xl text-orange-600"></i>
+                <div class="ml-5">
+                    <dt class="text-sm font-medium text-gray-500 truncate">AI Evaluations</dt>
+                    <dd id="ai-evals" class="text-lg font-medium text-gray-900">0</dd>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- Recent Jobs -->
+        <div class="bg-white shadow rounded-lg">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-medium text-gray-900">Recent Jobs</h3>
+            </div>
+            <div id="recent-jobs" class="divide-y divide-gray-200">
+                <div class="px-6 py-8 text-center text-gray-500">Loading jobs...</div>
+            </div>
+            <div class="px-6 py-3 bg-gray-50 text-right">
+                <a href="/jobs" class="text-sm text-blue-600 hover:text-blue-800">View all jobs →</a>
+            </div>
+        </div>
+
+        <!-- Recent Candidates -->
+        <div class="bg-white shadow rounded-lg">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-medium text-gray-900">Recent Candidates</h3>
+            </div>
+            <div id="recent-candidates" class="divide-y divide-gray-200">
+                <div class="px-6 py-8 text-center text-gray-500">Loading candidates...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="mt-8">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">Quick Actions</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <a href="/create-job" class="block p-6 bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md">
+                <div class="flex items-center">
+                    <i class="fas fa-plus-circle text-2xl text-blue-600 mr-4"></i>
+                    <div>
+                        <h4 class="text-sm font-medium text-gray-900">Create New Job</h4>
+                        <p class="text-sm text-gray-500">Post a new job opening</p>
+                    </div>
+                </div>
+            </a>
+
+            <a href="/jobs" class="block p-6 bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md">
+                <div class="flex items-center">
+                    <i class="fas fa-briefcase text-2xl text-green-600 mr-4"></i>
+                    <div>
+                        <h4 class="text-sm font-medium text-gray-900">Manage Jobs</h4>
+                        <p class="text-sm text-gray-500">View and edit job postings</p>
+                    </div>
+                </div>
+            </a>
+
+            <div class="block p-6 bg-white border border-gray-200 rounded-lg shadow-sm opacity-50">
+                <div class="flex items-center">
+                    <i class="fas fa-chart-bar text-2xl text-purple-600 mr-4"></i>
+                    <div>
+                        <h4 class="text-sm font-medium text-gray-900">Analytics</h4>
+                        <p class="text-sm text-gray-500">Coming soon</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% if role == "hr" %}
+  <h1 class="text-2xl font-bold mb-4">HR Dashboard</h1>
+  <p>Welcome HR! Here you can manage jobs and review candidates.</p>
+  <a href="/jobs" class="bg-blue-600 text-white px-4 py-2 rounded">Manage Jobs</a>
+{% elif role == "seeker" %}
+  <h1 class="text-2xl font-bold mb-4">Job Seeker Dashboard</h1>
+  <p>Welcome! Browse and apply for jobs.</p>
+  <a href="/jobs" class="bg-blue-600 text-white px-4 py-2 rounded">Browse Jobs</a>
+  <a href="/applications" class="ml-4 bg-green-600 text-white px-4 py-2 rounded">My Applications</a>
+
+{% endif %}
+
+<script>
+async function loadDashboard() {
+    try {
+        // Fetch jobs
+        const jobsRes = await fetch("/api/jobs");
+        const jobs = await jobsRes.json();
+
+        document.getElementById("total-jobs").textContent = jobs.length;
+        document.getElementById("active-jobs").textContent = jobs.filter(j => j.status === "active").length;
+
+        const recentJobsEl = document.getElementById("recent-jobs");
+        recentJobsEl.innerHTML = "";
+        jobs.slice(-5).reverse().forEach(job => {
+            const div = document.createElement("div");
+            div.className = "px-6 py-4 flex justify-between items-center";
+            div.innerHTML = `
+                <div>
+                    <h4 class="text-sm font-medium text-gray-900">${job.title}</h4>
+                    <p class="text-sm text-gray-500">${job.department || "No department"}</p>
+                    <p class="text-xs text-gray-400">Created ${new Date(job.created_at).toLocaleDateString()}</p>
+                </div>
+                <a href="/jobs/${job.id}" class="text-blue-600 hover:text-blue-800"><i class="fas fa-eye"></i></a>
+            `;
+            recentJobsEl.appendChild(div);
+        });
+
+        // Fetch candidates
+        const candRes = await fetch("/api/candidates");
+        const candidates = await candRes.json();
+
+        document.getElementById("total-candidates").textContent = candidates.length;
+        document.getElementById("ai-evals").textContent = candidates.filter(c => c.score > 0).length;
+
+        const recentCandidatesEl = document.getElementById("recent-candidates");
+        recentCandidatesEl.innerHTML = "";
+        candidates.slice(-5).reverse().forEach(cand => {
+            const div = document.createElement("div");
+            div.className = "px-6 py-4 flex justify-between items-center";
+            div.innerHTML = `
+                <div>
+                    <h4 class="text-sm font-medium text-gray-900">${cand.name}</h4>
+                    <p class="text-sm text-gray-500">${cand.job_title || "Unknown job"}</p>
+                    <p class="text-xs text-gray-400">Applied recently</p>
+                </div>
+                <span class="text-xs text-gray-500">${cand.score || 0}/100</span>
+            `;
+            recentCandidatesEl.appendChild(div);
+        });
+
+    } catch (err) {
+        console.error("Error loading dashboard:", err);
+    }
+}
+
+loadDashboard();
+</script>
+{% endblock %}

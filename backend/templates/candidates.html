@@ -1,0 +1,350 @@
+{% extends "base.html" %}
+
+{% block title %}
+{% if detail_view %}{{ candidate.name }} - SmartHire{% else %}Candidates for {{ job.title }} - SmartHire{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    {% if detail_view %}
+    <!-- Candidate Detail View -->
+    <div class="mb-6">
+        <nav class="flex" aria-label="Breadcrumb">
+            <ol class="flex items-center space-x-4">
+                <li>
+                    <a href="{{ url_for('dashboard') }}" class="text-gray-400 hover:text-gray-600">Dashboard</a>
+                </li>
+                <li>
+                    <i class="fas fa-chevron-right text-gray-300"></i>
+                </li>
+                <li>
+                    <a href="{{ url_for('view_job', job_id=candidate.job.id) }}" class="text-gray-400 hover:text-gray-600">{{ candidate.job.title }}</a>
+                </li>
+                <li>
+                    <i class="fas fa-chevron-right text-gray-300"></i>
+                </li>
+                <li class="text-gray-600">{{ candidate.name }}</li>
+            </ol>
+        </nav>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Candidate Info -->
+        <div class="lg:col-span-2">
+            <div class="bg-white shadow rounded-lg">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <div class="flex items-center justify-between">
+                        <h1 class="text-2xl font-bold text-gray-900">{{ candidate.name }}</h1>
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium {{ candidate.status|status_badge_class }}">
+                            {{ candidate.status.title() }}
+                        </span>
+                    </div>
+                    <p class="text-gray-600">Applying for {{ candidate.job.title }}</p>
+                </div>
+                
+                <div class="px-6 py-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                        {% if candidate.email %}
+                        <div>
+                            <label class="block text-sm font-medium text-gray-500">Email</label>
+                            <p class="mt-1 text-sm text-gray-900">{{ candidate.email }}</p>
+                        </div>
+                        {% endif %}
+                        {% if candidate.phone %}
+                        <div>
+                            <label class="block text-sm font-medium text-gray-500">Phone</label>
+                            <p class="mt-1 text-sm text-gray-900">{{ candidate.phone }}</p>
+                        </div>
+                        {% endif %}
+                        <div>
+                            <label class="block text-sm font-medium text-gray-500">Applied</label>
+                            <p class="mt-1 text-sm text-gray-900">{{ candidate.created_at.strftime('%B %d, %Y at %I:%M %p') }}</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-500">Resume</label>
+                            <p class="mt-1 text-sm text-gray-900">{{ candidate.resume_filename }}</p>
+                        </div>
+                    </div>
+
+                    <!-- Status Update Form -->
+                    <div class="border-t pt-4">
+                        <form method="POST" action="{{ url_for('update_candidate_status', candidate_id=candidate.id) }}" class="flex items-center space-x-4">
+                            <label for="status" class="block text-sm font-medium text-gray-700">Update Status:</label>
+                            <select name="status" id="status" class="block w-48 pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
+                                <option value="applied" {% if candidate.status == 'applied' %}selected{% endif %}>Applied</option>
+                                <option value="screening" {% if candidate.status == 'screening' %}selected{% endif %}>Screening</option>
+                                <option value="interviewing" {% if candidate.status == 'interviewing' %}selected{% endif %}>Interviewing</option>
+                                <option value="hired" {% if candidate.status == 'hired' %}selected{% endif %}>Hired</option>
+                                <option value="rejected" {% if candidate.status == 'rejected' %}selected{% endif %}>Rejected</option>
+                            </select>
+                            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium">
+                                Update
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Resume Text -->
+            {% if candidate.resume_text %}
+            <div class="bg-white shadow rounded-lg mt-6">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900">Resume Content</h3>
+                </div>
+                <div class="px-6 py-4">
+                    <div class="prose max-w-none">
+                        <pre class="whitespace-pre-wrap text-sm text-gray-700 bg-gray-50 p-4 rounded">{{ candidate.resume_text }}</pre>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Sidebar -->
+        <div class="space-y-6">
+            <!-- AI Evaluation -->
+            {% if evaluation %}
+            <div class="bg-white shadow rounded-lg">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900">AI Evaluation</h3>
+                </div>
+                <div class="px-6 py-4">
+                    <div class="space-y-4">
+                        <div>
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-sm font-medium text-gray-700">Overall Score</span>
+                                <span class="text-lg font-bold text-gray-900">{{ evaluation.overall_score|format_score }}/100</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div class="bg-blue-600 h-2 rounded-full" style="width: {{ evaluation.overall_score }}%"></div>
+                            </div>
+                        </div>
+
+                        {% if evaluation.recommendation %}
+                        <div>
+                            <span class="text-sm font-medium text-gray-700">Recommendation</span>
+                            <div class="mt-1">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ evaluation.recommendation|recommendation_class }}">
+                                    {{ evaluation.recommendation.title() }}
+                                </span>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <div class="grid grid-cols-2 gap-4">
+                            {% if evaluation.technical_score %}
+                            <div>
+                                <span class="text-xs text-gray-500">Technical</span>
+                                <p class="text-sm font-medium">{{ evaluation.technical_score|format_score }}</p>
+                            </div>
+                            {% endif %}
+                            {% if evaluation.experience_score %}
+                            <div>
+                                <span class="text-xs text-gray-500">Experience</span>
+                                <p class="text-sm font-medium">{{ evaluation.experience_score|format_score }}</p>
+                            </div>
+                            {% endif %}
+                            {% if evaluation.education_score %}
+                            <div>
+                                <span class="text-xs text-gray-500">Education</span>
+                                <p class="text-sm font-medium">{{ evaluation.education_score|format_score }}</p>
+                            </div>
+                            {% endif %}
+                            {% if evaluation.skills_match %}
+                            <div>
+                                <span class="text-xs text-gray-500">Skills Match</span>
+                                <p class="text-sm font-medium">{{ evaluation.skills_match|format_score }}%</p>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        {% if evaluation.strengths %}
+                        <div>
+                            <span class="text-sm font-medium text-gray-700">Strengths</span>
+                            <p class="text-sm text-gray-600 mt-1">{{ evaluation.strengths }}</p>
+                        </div>
+                        {% endif %}
+
+                        {% if evaluation.weaknesses %}
+                        <div>
+                            <span class="text-sm font-medium text-gray-700">Areas for Consideration</span>
+                            <p class="text-sm text-gray-600 mt-1">{{ evaluation.weaknesses }}</p>
+                        </div>
+                        {% endif %}
+
+                        {% if evaluation.ai_analysis %}
+                        <div>
+                            <span class="text-sm font-medium text-gray-700">AI Analysis</span>
+                            <p class="text-sm text-gray-600 mt-1">{{ evaluation.ai_analysis }}</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Email History -->
+            {% if emails %}
+            <div class="bg-white shadow rounded-lg">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900">Email History</h3>
+                </div>
+                <div class="divide-y divide-gray-200">
+                    {% for email in emails %}
+                    <div class="px-6 py-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <h4 class="text-sm font-medium text-gray-900">{{ email.subject }}</h4>
+                            <span class="text-xs text-gray-500">{{ email.sent_at.strftime('%b %d') }}</span>
+                        </div>
+                        <p class="text-sm text-gray-600">{{ email.body[:100] }}{% if email.body|length > 100 %}...{% endif %}</p>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800 mt-2">
+                            {{ email.email_type.replace('_', ' ').title() }}
+                        </span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% else %}
+    <!-- Candidates List View -->
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <nav class="flex mb-4" aria-label="Breadcrumb">
+                <ol class="flex items-center space-x-4">
+                    <li>
+                        <a href="{{ url_for('dashboard') }}" class="text-gray-400 hover:text-gray-600">Dashboard</a>
+                    </li>
+                    <li>
+                        <i class="fas fa-chevron-right text-gray-300"></i>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('jobs') }}" class="text-gray-400 hover:text-gray-600">Jobs</a>
+                    </li>
+                    <li>
+                        <i class="fas fa-chevron-right text-gray-300"></i>
+                    </li>
+                    <li class="text-gray-600">{{ job.title }}</li>
+                </ol>
+            </nav>
+            <h1 class="text-3xl font-bold text-gray-900">Candidates for {{ job.title }}</h1>
+            <p class="mt-2 text-gray-600">{{ candidates|length }} candidates applied</p>
+        </div>
+        <a href="{{ url_for('upload_resume', job_id=job.id) }}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium">
+            <i class="fas fa-plus mr-2"></i>Add Candidate
+        </a>
+    </div>
+
+    <!-- Job Info Card -->
+    <div class="bg-white shadow rounded-lg mb-6">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-medium text-gray-900">Job Details</h3>
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ job.status|status_badge_class }}">
+                    {{ job.status.title() }}
+                </span>
+            </div>
+        </div>
+        <div class="px-6 py-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                {% if job.department %}
+                <div>
+                    <span class="text-sm font-medium text-gray-500">Department</span>
+                    <p class="text-sm text-gray-900">{{ job.department }}</p>
+                </div>
+                {% endif %}
+                {% if job.location %}
+                <div>
+                    <span class="text-sm font-medium text-gray-500">Location</span>
+                    <p class="text-sm text-gray-900">{{ job.location }}</p>
+                </div>
+                {% endif %}
+                {% if job.salary_range %}
+                <div>
+                    <span class="text-sm font-medium text-gray-500">Salary Range</span>
+                    <p class="text-sm text-gray-900">{{ job.salary_range }}</p>
+                </div>
+                {% endif %}
+            </div>
+            <p class="text-gray-600">{{ job.description[:200] }}{% if job.description|length > 200 %}...{% endif %}</p>
+        </div>
+    </div>
+
+    <!-- Candidates List -->
+    {% if candidates %}
+    <div class="bg-white shadow rounded-lg overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-medium text-gray-900">Candidates</h3>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Candidate</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">AI Score</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Recommendation</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Applied</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for candidate in candidates %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div>
+                                <div class="text-sm font-medium text-gray-900">{{ candidate.name }}</div>
+                                {% if candidate.email %}
+                                <div class="text-sm text-gray-500">{{ candidate.email }}</div>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ candidate.status|status_badge_class }}">
+                                {{ candidate.status.title() }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {% if candidate.evaluations %}
+                                {{ candidate.evaluations[0].overall_score|format_score }}/100
+                            {% else %}
+                                <span class="text-gray-400">Not evaluated</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            {% if candidate.evaluations and candidate.evaluations[0].recommendation %}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ candidate.evaluations[0].recommendation|recommendation_class }}">
+                                    {{ candidate.evaluations[0].recommendation.title() }}
+                                </span>
+                            {% else %}
+                                <span class="text-gray-400">N/A</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{ candidate.created_at.strftime('%b %d, %Y') }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <a href="{{ url_for('view_candidate', candidate_id=candidate.id) }}" class="text-blue-600 hover:text-blue-900">
+                                View Details
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% else %}
+    <div class="text-center py-12">
+        <i class="fas fa-users text-6xl text-gray-300 mb-4"></i>
+        <h3 class="text-lg font-medium text-gray-900 mb-2">No candidates yet</h3>
+        <p class="text-gray-500 mb-6">Start receiving applications for this position.</p>
+        <a href="{{ url_for('upload_resume', job_id=job.id) }}" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-md font-medium">
+            <i class="fas fa-plus mr-2"></i>Add First Candidate
+        </a>
+    </div>
+    {% endif %}
+    {% endif %}
+</div>
+{% endblock %}

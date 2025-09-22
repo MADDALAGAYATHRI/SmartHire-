@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+
+{% block title %}Upload Resume - SmartHire{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="mb-6">
+        <nav class="flex" aria-label="Breadcrumb">
+            <ol class="flex items-center space-x-4">
+                <li><a href="/dashboard" class="text-gray-400 hover:text-gray-600">Dashboard</a></li>
+                <li><i class="fas fa-chevron-right text-gray-300"></i></li>
+                <li><a href="/jobs" class="text-gray-400 hover:text-gray-600">Jobs</a></li>
+                <li><i class="fas fa-chevron-right text-gray-300"></i></li>
+                <li class="text-gray-600">Upload Resume</li>
+            </ol>
+        </nav>
+    </div>
+
+    <div class="bg-white shadow rounded-lg">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h1 class="text-2xl font-bold text-gray-900">Upload Candidate Resume</h1>
+            <p class="mt-2 text-gray-600">Add a new candidate for this job</p>
+        </div>
+
+        <form id="resume-form" enctype="multipart/form-data" class="px-6 py-4">
+            <div class="space-y-6">
+                <!-- Candidate Information -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="candidate_name" class="block text-sm font-medium text-gray-700">Candidate Name *</label>
+                        <input type="text" name="candidate_name" id="candidate_name" required
+                               class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    
+                    <div>
+                        <label for="candidate_email" class="block text-sm font-medium text-gray-700">Email Address</label>
+                        <input type="email" name="candidate_email" id="candidate_email"
+                               class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                        <p class="mt-1 text-sm text-gray-500">Will be used for automated communications</p>
+                    </div>
+                </div>
+
+                <div>
+                    <label for="candidate_phone" class="block text-sm font-medium text-gray-700">Phone Number</label>
+                    <input type="tel" name="candidate_phone" id="candidate_phone"
+                           class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                </div>
+
+                <!-- Resume Upload -->
+                <div>
+                    <label for="resume" class="block text-sm font-medium text-gray-700">Resume File *</label>
+                    <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md hover:border-gray-400 transition-colors">
+                        <div class="space-y-1 text-center">
+                            <i class="fas fa-file-upload text-4xl text-gray-300 mb-4"></i>
+                            <div class="flex text-sm text-gray-600">
+                                <label for="resume" class="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500">
+                                    <span>Upload a file</span>
+                                    <input id="resume" name="resume" type="file" class="sr-only" required accept=".pdf,.txt,.doc,.docx" onchange="updateFileName(this)">
+                                </label>
+                                <p class="pl-1">or drag and drop</p>
+                            </div>
+                            <p class="text-xs text-gray-500">PDF, TXT, DOC, DOCX up to 5MB</p>
+                            <p id="file-name" class="text-sm text-gray-700 font-medium hidden"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI Processing Notice -->
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <div class="flex">
+                        <i class="fas fa-robot text-blue-600 mt-0.5 mr-3"></i>
+                        <div>
+                            <h3 class="text-sm font-medium text-blue-800">AI-Powered Analysis</h3>
+                            <p class="text-sm text-blue-700 mt-1">
+                                Once uploaded, the resume will be automatically analyzed using AI.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Submit Buttons -->
+            <div class="mt-8 flex justify-end space-x-3">
+                <a href="/jobs" class="bg-gray-300 py-2 px-4 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
+                    Cancel
+                </a>
+                <button type="submit" class="bg-blue-600 py-2 px-4 border border-transparent rounded-md text-sm font-medium text-white hover:bg-blue-700" id="submit-btn">
+                    <span id="submit-text">Upload & Analyze Resume</span>
+                    <i id="submit-spinner" class="fas fa-spinner fa-spin hidden ml-2"></i>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function updateFileName(input) {
+    const fileNameElement = document.getElementById('file-name');
+    if (input.files.length > 0) {
+        const fileName = input.files[0].name;
+        fileNameElement.textContent = `Selected: ${fileName}`;
+        fileNameElement.classList.remove('hidden');
+    } else {
+        fileNameElement.classList.add('hidden');
+    }
+}
+
+document.getElementById("resume-form").addEventListener("submit", async function(e) {
+    e.preventDefault();
+
+    const jobId = prompt("Enter Job ID:"); // For now, manually enter Job ID
+    if (!jobId) {
+        alert("Job ID is required!");
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append("files", document.getElementById("resume").files[0]);
+
+    // Candidate metadata (optional, if you want to send)
+    formData.append("candidate_name", document.getElementById("candidate_name").value);
+    formData.append("candidate_email", document.getElementById("candidate_email").value);
+    formData.append("candidate_phone", document.getElementById("candidate_phone").value);
+
+    const submitBtn = document.getElementById("submit-btn");
+    const submitText = document.getElementById("submit-text");
+    const submitSpinner = document.getElementById("submit-spinner");
+
+    submitBtn.disabled = true;
+    submitText.textContent = "Processing...";
+    submitSpinner.classList.remove("hidden");
+
+    try {
+        const res = await fetch(`/api/jobs/${jobId}/resumes`, {
+            method: "POST",
+            body: formData
+        });
+
+        const data = await res.json();
+        alert("Upload complete: " + JSON.stringify(data));
+        window.location.href = "/dashboard";
+    } catch (err) {
+        console.error(err);
+        alert("Error uploading resume.");
+    } finally {
+        submitBtn.disabled = false;
+        submitText.textContent = "Upload & Analyze Resume";
+        submitSpinner.classList.add("hidden");
+    }
+});
+</script>
+{% endblock %}

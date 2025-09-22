@@ -1,0 +1,9 @@
+fastapi
+uvicorn[standard]
+pymongo
+faiss-cpu
+python-dotenv
+pydantic
+pdfminer.six
+scikit-learn
+python-multipart

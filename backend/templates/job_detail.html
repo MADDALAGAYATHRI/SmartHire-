@@ -1,0 +1,276 @@
+{% extends "base.html" %}
+
+{% block title %}Job Details - SmartHire{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Back Button -->
+    <a href="/jobs" class="text-blue-600 hover:text-blue-800 mb-4 inline-block">&larr; Back to Jobs</a>
+
+    <!-- Job Header -->
+    <div id="job-header" class="bg-white shadow rounded-lg p-6 mb-6">
+        <h1 class="text-2xl font-bold text-gray-900" id="job-title">Loading...</h1>
+        <p class="text-gray-600" id="job-meta"></p>
+        <p class="text-gray-500 mt-2" id="job-salary"></p>
+    </div>
+    
+
+
+    <!-- Job Description -->
+    <div class="bg-white shadow rounded-lg p-6 mb-6">
+        <h2 class="text-lg font-semibold text-gray-900 mb-2">Description</h2>
+        <p class="text-gray-700" id="job-description">Loading...</p>
+    </div>
+
+    <!-- Job Requirements -->
+    <div class="bg-white shadow rounded-lg p-6 mb-6">
+        <h2 class="text-lg font-semibold text-gray-900 mb-2">Requirements</h2>
+        <p class="text-gray-700" id="job-requirements">Loading...</p>
+    </div>
+    <!-- Resume Upload / Add Candidate -->
+<div class="bg-white shadow rounded-lg p-6 mb-6">
+    <h2 class="text-lg font-semibold text-gray-900 mb-2">Add Candidate / Upload Resume</h2>
+    
+    <form id="resumeForm" class="mb-4" enctype="multipart/form-data" data-job-id="{{ job_id }}">
+        <label for="resumeFile" class="block mb-2 font-medium">Upload Resume:</label>
+        <input type="file" id="resumeFile" name="resumeFile" accept=".pdf,.doc,.docx,.txt"
+               class="border p-2 mb-2 w-full">
+        <span id="file-name" class="text-sm text-gray-600 hidden"></span>
+        <button type="submit"
+                class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">
+            Analyze Resume & Score
+        </button>
+    </form>
+
+    <div id="scoreResult" class="mt-2 font-semibold text-lg text-gray-700"></div>
+</div>
+
+
+    <!-- Candidates -->
+    <div class="bg-white shadow rounded-lg p-6">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-lg font-semibold text-gray-900">Candidates</h2>
+            <a id="export-btn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium" href="#">
+                Export CSV
+            </a>
+        </div>
+        <div id="candidates-list" class="space-y-4">
+            <p class="text-gray-500">Loading candidates...</p>
+        </div>
+    </div>
+    <!-- ActionButtons -->
+    <!--delete-->
+     <div class="flex justify-between items-center">
+    <h1 id="job-title" class="text-3xl font-bold text-gray-900"></h1>
+    <button id="delete-job-btn"
+        class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium">
+        Delete Job
+    </button>
+</div>
+
+    <button id="edit-job-btn"
+    class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-md text-sm font-medium">
+    Edit Job
+</button>
+
+</div>
+<!-- Job Seeker Section -->
+{% if role == "seeker" %}
+<div class="bg-white shadow rounded-lg p-6 mb-6">
+  <h2 class="text-lg font-semibold text-gray-900 mb-2">Apply for this Job</h2>
+  <form id="resumeForm" class="mb-4" enctype="multipart/form-data">
+    <label for="resumeFile" class="block mb-2 font-medium">Upload Resume:</label>
+    <input type="file" id="resumeFile" name="resumeFile"
+           accept=".pdf,.doc,.docx,.txt" class="border p-2 mb-2 w-full">
+    <button type="submit"
+            class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">
+      Apply & Check ATS Score
+    </button>
+  </form>
+  <div id="scoreResult" class="mt-2 font-semibold text-lg text-gray-700"></div>
+</div>
+{% endif %}
+
+<!-- HR Section -->
+{% if role == "hr" %}
+<div class="bg-white shadow rounded-lg p-6">
+  <div class="flex justify-between items-center mb-4">
+    <h2 class="text-lg font-semibold text-gray-900">Candidates</h2>
+    <a id="export-btn"
+       class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium"
+       href="#">Export CSV</a>
+  </div>
+  <div id="candidates-list" class="space-y-4">
+    <p class="text-gray-500">Loading candidates...</p>
+  </div>
+</div>
+
+<div class="flex justify-between items-center mt-4">
+  <button id="edit-job-btn"
+      class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-md text-sm font-medium">
+    Edit Job
+  </button>
+  <button id="delete-job-btn"
+      class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium">
+    Delete Job
+  </button>
+</div>
+{% endif %}
+
+<script>
+const jobId = "{{ job_id }}";
+let currentJob = null; // keep job details globally
+
+async function loadJob() {
+    try {
+        const res = await fetch(`/api/jobs/${jobId}`);
+        if (!res.ok) {
+            document.getElementById("job-header").innerHTML = "<p class='text-red-500'>Job not found.</p>";
+            return;
+        }
+        const job = await res.json();
+        currentJob = job;  // store globally ✅
+
+        document.getElementById("job-title").textContent = job.title;
+        document.getElementById("job-meta").textContent = `${job.department || "No department"} • ${job.location || "Remote"}`;
+        document.getElementById("job-salary").textContent = job.salary_range || "";
+        document.getElementById("job-description").textContent = job.description || "No description.";
+        document.getElementById("job-requirements").textContent = job.requirements || "No requirements.";
+        document.getElementById("export-btn").href = `/api/candidates/export.csv?job_id=${jobId}`;
+    } catch (err) {
+        console.error("Error loading job:", err);
+    }
+}
+
+
+async function loadCandidates() {
+    try {
+        const res = await fetch(`/api/candidates?job_id=${jobId}`);
+        const candidates = await res.json();
+
+        const listEl = document.getElementById("candidates-list");
+        listEl.innerHTML = "";
+
+        if (!candidates.length) {
+            listEl.innerHTML = "<p class='text-gray-500'>No candidates yet.</p>";
+            return;
+        }
+
+        candidates.forEach(c => {
+            const div = document.createElement("div");
+            div.className = "p-4 border rounded-md shadow-sm";
+            div.innerHTML = `
+                <h3 class="text-md font-semibold text-gray-900">${c.name || "Unnamed Candidate"}</h3>
+                <p class="text-sm text-gray-600">${c.email || "No email"}</p>
+                <p class="text-sm text-gray-500 mt-1">Experience: ${c.experience_years || 0} years</p>
+                <p class="text-sm text-gray-500">Score: ${c.score || 0}</p>
+                <p class="text-sm mt-2"><span class="px-2 py-1 text-xs rounded-full ${
+                    c.status === "shortlisted" ? "bg-green-100 text-green-800" :
+                    c.status === "rejected" ? "bg-red-100 text-red-800" :
+                    "bg-gray-100 text-gray-800"
+                }">${c.status || "new"}</span></p>
+            `;
+            listEl.appendChild(div);
+        });
+
+    } catch (err) {
+        console.error("Error loading candidates:", err);
+    }
+}
+
+document.getElementById("delete-job-btn").addEventListener("click", async () => {
+    if (!confirm("Are you sure you want to delete this job? This cannot be undone.")) return;
+
+    try {
+        const res = await fetch(`/api/jobs/${jobId}`, { method: "DELETE" });
+        if (res.ok) {
+            alert("Job deleted successfully.");
+            window.location.href = "/jobs"; // redirect back to job list
+        } else {
+            const error = await res.json();
+            alert("Error deleting job: " + (error.detail || "Unknown error"));
+        }
+    } catch (err) {
+        console.error("Error deleting job:", err);
+        alert("Failed to delete job.");
+    }
+});
+
+document.getElementById("edit-job-btn").addEventListener("click", () => {
+    // Replace static fields with editable inputs
+    const jobTitle = document.getElementById("job-title");
+    jobTitle.innerHTML = `<input id="edit-title" type="text" value="${currentJob.title}" 
+        class="border border-gray-300 rounded-md px-2 py-1 w-full">`;
+
+    // Show Save button
+    const saveBtn = document.createElement("button");
+    saveBtn.textContent = "Save Changes";
+    saveBtn.className = "bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium ml-2";
+    saveBtn.id = "save-job-btn";
+    document.getElementById("edit-job-btn").after(saveBtn);
+
+    saveBtn.addEventListener("click", async () => {
+        const updatedJob = {
+            ...currentJob,  // keep old fields ✅
+            title: document.getElementById("edit-title").value
+        };
+
+        try {
+            const res = await fetch(`/api/jobs/${jobId}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(updatedJob)
+            });
+
+            if (res.ok) {
+                alert("Job updated successfully!");
+                window.location.reload();
+            } else {
+                const error = await res.json();
+                alert("Error updating job: " + (error.detail || "Unknown error"));
+            }
+        } catch (err) {
+            console.error("Error updating job:", err);
+            alert("Failed to update job.");
+        }
+    });
+});
+async function loadCandidates(jobId) {
+    const response = await fetch(`/api/jobs/${jobId}`);
+    const job = await response.json();
+
+    const container = document.getElementById("candidates-list");
+    container.innerHTML = "";
+
+    if (!job.candidates || job.candidates.length === 0) {
+        container.innerHTML = "<p>No candidates yet.</p>";
+        return;
+    }
+
+    job.candidates.forEach((c, index) => {
+        const div = document.createElement("div");
+        div.className = "candidate-card";
+        div.innerHTML = `
+            <strong>Rank #${index + 1}</strong><br>
+            <b>Name:</b> ${c.name}<br>
+            <b>Score:</b> ${c.score}%<br>
+            <b>Preview:</b> ${c.resume_text.slice(0, 150)}...
+        `;
+        container.appendChild(div);
+    });
+    
+}
+
+// Load job + candidates on page load
+loadJob();
+loadCandidates();
+</script>
+{% if user_role == "seeker" %}
+  <!-- Apply / Upload Resume UI -->
+{% endif %}
+
+{% if user_role == "hr" %}
+  <!-- Candidates list, Export CSV, Edit, Delete -->
+{% endif %}
+
+{% endblock %}

@@ -1,0 +1,247 @@
+{% extends "base.html" %}
+
+{% block title %}Jobs - SmartHire{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">Jobs</h1>
+            <p class="mt-2 text-gray-600">Manage your job postings and candidates</p>
+        </div>
+        <a href="/create-job" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium">
+            <i class="fas fa-plus mr-2"></i>Create Job
+        </a>
+    </div>
+
+    <!-- Filters -->
+    <div class="bg-white p-4 rounded-lg shadow mb-6">
+        <form id="filter-form" class="flex items-center space-x-4">
+            <div>
+                <label for="status" class="block text-sm font-medium text-gray-700">Status</label>
+                <select name="status" id="status"
+                        class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
+                    <option value="">All Statuses</option>
+                    <option value="active">Active</option>
+                    <option value="closed">Closed</option>
+                    <option value="draft">Draft</option>
+                </select>
+            </div>
+            <div class="pt-6">
+                <button type="submit" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md text-sm font-medium">
+                    Filter
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Jobs Grid -->
+    <div id="jobs-list" class="grid gap-6 mb-8">
+        <div class="text-center py-12 text-gray-500">Loading jobs...</div>
+    </div>
+
+    <!-- Empty State (hidden by default) -->
+    <div id="empty-state" class="hidden text-center py-12">
+        <i class="fas fa-briefcase text-6xl text-gray-300 mb-4"></i>
+        <h3 class="text-lg font-medium text-gray-900 mb-2">No jobs found</h3>
+        <p class="text-gray-500 mb-6">Get started by creating your first job posting.</p>
+        <a href="/create-job" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-md font-medium">
+            <i class="fas fa-plus mr-2"></i>Create Your First Job
+        </a>
+    </div>
+</div>
+
+<script>
+async function loadJobs(statusFilter = "") {
+    const jobsListEl = document.getElementById("jobs-list");
+    const emptyStateEl = document.getElementById("empty-state");
+
+    try {
+        let url = "/api/jobs";
+        if (statusFilter) {
+            url += "?status=" + encodeURIComponent(statusFilter);
+        }
+
+        const res = await fetch(url);
+        const jobs = await res.json();
+
+        jobsListEl.innerHTML = "";
+        if (!jobs.length) {
+            jobsListEl.classList.add("hidden");
+            emptyStateEl.classList.remove("hidden");
+            return;
+        }
+
+        jobsListEl.classList.remove("hidden");
+        emptyStateEl.classList.add("hidden");
+
+        jobs.forEach(job => {
+            const div = document.createElement("div");
+            div.className = "bg-white shadow rounded-lg overflow-hidden";
+            div.innerHTML = `
+                <div class="px-6 py-4">
+                    <div class="flex items-center justify-between">
+                        <div class="flex-1">
+                            <h3 class="text-lg font-medium text-gray-900">${job.title}</h3>
+                            <p class="text-sm text-gray-500">${job.department || "No department"} • ${job.location || "Remote"}</p>
+                            ${job.salary_range ? `<p class="text-sm text-gray-600 mt-1">${job.salary_range}</p>` : ""}
+                            <p class="text-sm text-gray-400 mt-2">Created ${new Date(job.created_at).toLocaleDateString()}</p>
+                        </div>
+                        <div class="flex items-center space-x-4">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                job.status === "active" ? "bg-green-100 text-green-800" :
+                                job.status === "closed" ? "bg-red-100 text-red-800" :
+                                "bg-gray-100 text-gray-800"
+                            }">${job.status ? job.status.toUpperCase() : "N/A"}</span>
+                            <div class="text-sm text-gray-500">
+                                <span class="font-medium">${job.candidates ? job.candidates.length : 0}</span> candidates
+                            </div>
+                            <a href="/jobs/${job.id}" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm">
+                                View
+                            </a>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <p class="text-gray-600 line-clamp-2">${job.description ? job.description.slice(0,200) : ""}${job.description && job.description.length > 200 ? "..." : ""}</p>
+                    </div>
+                </div>
+            `;
+            jobsListEl.appendChild(div);
+        });
+
+    } catch (err) {
+        console.error("Error loading jobs:", err);
+        jobsListEl.innerHTML = `<div class="text-center py-12 text-red-500">Error loading jobs</div>`;
+    }
+}
+
+// Filter handling
+document.getElementById("filter-form").addEventListener("submit", e => {
+    e.preventDefault();
+    const status = document.getElementById("status").value;
+    loadJobs(status);
+});
+
+// Load jobs on page load
+loadJobs();
+</script>
+{% endblock %}
+{% if create_mode %}
+<div class="mb-8">
+    <h1 class="text-3xl font-bold text-gray-900 mb-6">Create New Job</h1>
+    
+    <form id="create-job-form" class="bg-white shadow rounded-lg p-6">
+        <div class="grid grid-cols-1 gap-6">
+            <div>
+                <label for="title" class="block text-sm font-medium text-gray-700">Job Title *</label>
+                <input type="text" name="title" id="title" required 
+                       class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="department" class="block text-sm font-medium text-gray-700">Department</label>
+                    <input type="text" name="department" id="department" 
+                           class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                
+                <div>
+                    <label for="location" class="block text-sm font-medium text-gray-700">Location</label>
+                    <input type="text" name="location" id="location" 
+                           class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                </div>
+            </div>
+            
+            <div>
+                <label for="salary_range" class="block text-sm font-medium text-gray-700">Salary Range</label>
+                <input type="text" name="salary_range" id="salary_range" placeholder="e.g., $80,000 - $120,000"
+                       class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+            </div>
+            
+            <div>
+                <label for="description" class="block text-sm font-medium text-gray-700">Job Description *</label>
+                <textarea name="description" id="description" rows="6" required
+                          class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                          placeholder="Describe the role, responsibilities, and company culture..."></textarea>
+            </div>
+            
+            <div>
+                <label for="requirements" class="block text-sm font-medium text-gray-700">Requirements</label>
+                <textarea name="requirements" id="requirements" rows="4"
+                          class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                          placeholder="List required skills, experience, education, etc..."></textarea>
+            </div>
+        </div>
+        
+        <div class="mt-6 flex justify-end space-x-3">
+            <a href="/jobs" class="bg-gray-300 py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50">
+                Cancel
+            </a>
+            <button type="submit" class="bg-blue-600 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-blue-700" id="create-job-btn">
+                Create Job
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+document.getElementById("create-job-form").addEventListener("submit", async function(e) {
+    e.preventDefault();
+
+    const btn = document.getElementById("create-job-btn");
+    btn.disabled = true;
+    btn.textContent = "Creating...";
+
+    const jobData = {
+        title: document.getElementById("title").value,
+        department: document.getElementById("department").value,
+        location: document.getElementById("location").value,
+        salary_range: document.getElementById("salary_range").value,
+        description: document.getElementById("description").value,
+        requirements: document.getElementById("requirements").value,
+        status: "active"
+    };
+
+    try {
+        const res = await fetch("/api/jobs", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(jobData)
+        });
+
+        if (res.ok) {
+            window.location.href = "/jobs"; // redirect to job list
+        } else {
+            const error = await res.json();
+            alert("Error creating job: " + (error.detail || "Unknown error"));
+        }
+    } catch (err) {
+        console.error("Error:", err);
+        alert("Failed to create job.");
+    } finally {
+        btn.disabled = false;
+        btn.textContent = "Create Job";
+    }
+});
+</script>
+{% if user_role == "hr" %}
+  <a href="{{ url_for('create_job_page') }}"
+     class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium">
+    + Create Job
+  </a>
+{% endif %}
+
+{% endif %}
+
+@app.get("/create-job", response_class=HTMLResponse)
+async def create_job_page(request: Request):
+    return templates.TemplateResponse("jobs.html", {
+        "request": request,
+        "create_mode": True
+    })
+@app.get("/jobs/{job_id}", response_class=HTMLResponse)
+async def job_detail(request: Request, job_id: str):
+    return templates.TemplateResponse("job_detail.html", {"request": request, "job_id": job_id})
+
+            

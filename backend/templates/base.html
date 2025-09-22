@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}SmartHire - AI-Powered Hiring Assistant{% endblock %}</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+  <link rel="stylesheet" href="/static/css/style.css" />
+</head>
+
+<body class="bg-gray-50 min-h-screen">
+
+  <!-- Navigation (single source of truth) -->
+<nav class="bg-white shadow mb-6">
+  <div class="max-w-7xl mx-auto px-4 flex justify-between items-center h-16">
+    
+    <!-- Left side: Logo + Menu -->
+    <div class="flex items-center space-x-8">
+      <!-- Logo -->
+      <a href="/" class="text-xl font-bold text-blue-600">SmartHire</a>&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp
+
+      <!-- Menu links -->
+      <div class="flex items-center space-x-6">
+        {% if user_role == 'hr' %}
+          <a href="{{ url_for('dashboard') }}" class="text-gray-700 hover:text-blue-600">Dashboard</a>&nbsp&nbsp
+          <a href="{{ url_for('jobs_page') }}" class="text-gray-700 hover:text-blue-600">Jobs</a>&nbsp&nbsp
+          <a href="{{ url_for('create_job_page') }}" class="text-gray-700 hover:text-blue-600">Create Job</a>&nbsp&nbsp
+        {% elif user_role == 'seeker' %}
+          <a href="{{ url_for('dashboard') }}" class="text-gray-700 hover:text-blue-600">Dashboard</a>&nbsp&nbsp
+          <a href="{{ url_for('jobs_page') }}" class="text-gray-700 hover:text-blue-600">Jobs</a>&nbsp&nbsp
+          <a href="{{ url_for('my_applications_page') }}" class="text-gray-700 hover:text-blue-600">My Applications</a>&nbsp&nbsp
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Right side: Logout -->
+    <div>
+      {% if user_role %}
+        <a href="{{ url_for('logout') }}" class="text-red-600 hover:text-red-800">Logout</a>
+      {% else %}
+        <a href="{{ url_for('login') }}" class="text-gray-700 hover:text-blue-600 mr-4">Login</a>
+        <a href="{{ url_for('signup') }}" class="text-gray-700 hover:text-blue-600">Sign up</a>
+      {% endif %}
+    </div>
+  </div>
+</nav>
+
+
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="bg-white border-t mt-12">
+    <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+      <div class="text-center text-sm text-gray-500">
+        <p>&copy; 2025 SmartHire. An AI-powered hiring assistant.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="/static/js/app.js"></script>
+</body>
+
+</html>

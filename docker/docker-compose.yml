@@ -1,0 +1,35 @@
+version: "3.9"
+services:
+  mongo:
+    image: mongo:6
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+  backend:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.backend
+    environment:
+      - MONGO_URI=mongodb://mongo:27017
+      - MONGO_DB=smarthire
+    volumes:
+      - faiss_data:/data
+    ports:
+      - "8000:8000"
+    depends_on:
+      - mongo
+  frontend:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.frontend
+    environment:
+      - VITE_API_BASE=http://localhost:8000
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+volumes:
+  mongo_data:
+  faiss_data:

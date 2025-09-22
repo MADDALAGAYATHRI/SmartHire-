@@ -1,0 +1,20 @@
+{
+  "name": "smarthire_full_local",
+  "version": "1.0.0",
+  "description": "SmartHire full local setup",
+  "main": "index.js",
+  "scripts": {
+    "dev": "tailwindcss -i ./backend/static/css/input.css -o ./backend/static/css/style.css --watch",
+    "build:css": "tailwindcss -i ./backend/static/css/input.css -o ./backend/static/css/style.css",
+    "start": "npm run dev"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "autoprefixer": "^10.4.21",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.1.12"
+  }
+}
